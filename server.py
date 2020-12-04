@@ -11,7 +11,7 @@ connected = 0
 
 clients = {}
 players = {}
-gameCount = 0
+gameID = 0
 
 def connectionLoop(sock):
    while True:
@@ -20,6 +20,16 @@ def connectionLoop(sock):
       if addr in clients:
          if 'heartbeat' in data:
             clients[addr]['lastBeat'] = datetime.now()
+         elif 'playerConnect' in data:
+            #print(json.loads(data[2:-1]))
+            uniqueID = json.loads(data[2:-1])['id']
+            #print("ID received: " + uniqueID)
+            players[uniqueID] = json.loads(data[2:-1])['name']
+            #print("ID Name: " + players[uniqueID])
+            if len(players) >= 3:
+               joinGame()
+            else:
+               print(len(players))
       else:
          if 'connect' in data:
             clients[addr] = {}
@@ -28,14 +38,9 @@ def connectionLoop(sock):
             m = json.dumps(message)
             for c in clients:
                sock.sendto(bytes(m,'utf8'), (c[0],c[1]))
-         elif 'playerConnect' in data:
-            player['id'] = json.loads(data['id'])
-            player['id']['name'] = json.loads(data['name'])
-            if len(players) >= 3:
-               joinGame()
 
 def joinGame():
-   print(len(players))
+   print(str(len(players)) + " players have joined")
 
 def cleanClients(sock):
    while True:
