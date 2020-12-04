@@ -5,6 +5,9 @@ from _thread import *
 import threading
 from datetime import datetime
 import json
+import requests
+
+URL = "https://3fxdttozv0.execute-api.us-east-2.amazonaws.com/default/getPlayerInfo"
 
 clients_lock = threading.Lock()
 connected = 0
@@ -21,15 +24,13 @@ def connectionLoop(sock):
          if 'heartbeat' in data:
             clients[addr]['lastBeat'] = datetime.now()
          elif 'playerConnect' in data:
-            #print(json.loads(data[2:-1]))
             uniqueID = json.loads(data[2:-1])['id']
-            #print("ID received: " + uniqueID)
-            players[uniqueID] = json.loads(data[2:-1])['name']
-            #print("ID Name: " + players[uniqueID])
+            players[uniqueID] = {}
+            players[uniqueID]['name'] = json.loads(data[2:-1])['name']
+            #print("ID Name: " + players[uniqueID]['name'])
+            GetPlayerData(uniqueID)
             if len(players) >= 3:
-               joinGame()
-            else:
-               print(len(players))
+               CreateGame()
       else:
          if 'connect' in data:
             clients[addr] = {}
@@ -39,8 +40,18 @@ def connectionLoop(sock):
             for c in clients:
                sock.sendto(bytes(m,'utf8'), (c[0],c[1]))
 
-def joinGame():
+def CreateGame():
    print(str(len(players)) + " players have joined")
+   #Loop through players and check if any 3 have ratings in range
+   #Create a game dict with current gameID and 3 players
+   #Send message to client
+   #Remove players from dict / update gameID
+
+def GetPlayerData(playerID):
+   PARAMS = {'player_id':playerID}
+   r = requests.get(url = URL, params = PARAMS)
+   data = r.json()
+   players[playerID]['rating'] = data['rating']
 
 def cleanClients(sock):
    while True:
