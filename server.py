@@ -30,7 +30,7 @@ def connectionLoop(sock):
             #print("ID Name: " + players[uniqueID]['name'])
             GetPlayerData(uniqueID)
             if len(players) >= 3:
-               CreateGame()
+               CreateGame(sock, addr)
       else:
          if 'connect' in data:
             clients[addr] = {}
@@ -40,12 +40,44 @@ def connectionLoop(sock):
             for c in clients:
                sock.sendto(bytes(m,'utf8'), (c[0],c[1]))
 
-def CreateGame():
-   print(str(len(players)) + " players have joined")
-   #Loop through players and check if any 3 have ratings in range
-   #Create a game dict with current gameID and 3 players
-   #Send message to client
-   #Remove players from dict / update gameID
+def CreateGame(sock, addr):
+   #print(str(len(players)) + " players have joined")
+   range = 50
+   gameCreated = False
+
+   gameDetails = {}
+
+   while not gameCreated:
+      for p, v in players.items():
+         if gameCreated:
+            break
+         gameDetails.clear()
+         gameDetails = {gameID:{}}
+         for pl, va in players.items():
+            if p == pl:
+               continue
+            else:
+               if len(gameDetails[gameID]) < 2:
+                  if abs(int(v['rating']) - int(va['rating'])) <= range:
+                     gameDetails[gameID]['player1'] = p
+                     gameDetails[gameID]['player2'] = pl
+               else:
+                  if (max(int(gameDetails[gameID]['player1']), int(gameDetails[gameID]['player2'])) - int(va['rating']) <= range or
+                        int(va['rating']) - min(int(gameDetails[gameID]['player1']), int(gameDetails[gameID]['player2'])) <= range):
+                     gameDetails[gameID]['player3'] = pl
+                     gameCreated = True
+                     break
+      range += 30
+
+   message = {"gameID":gameID, gameDetails[gameID]['player1']:players[gameDetails[gameID]['player1']], gameDetails[gameID]['player2']:players[gameDetails[gameID]['player2']], gameDetails[gameID]['player3']:players[gameDetails[gameID]['player3']]}
+   m = json.dumps(message)
+   sock.sendto(bytes(m, 'utf8'), addr)
+   
+   gameID += 1
+
+   del players.[gameDetails[gameID]['player1']]
+   del players.[gameDetails[gameID]['player2']]
+   del players.[gameDetails[gameID]['player3']]
 
 def GetPlayerData(playerID):
    PARAMS = {'player_id':playerID}
