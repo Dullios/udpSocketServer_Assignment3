@@ -68,18 +68,12 @@ def CreateGame(sock, addr):
                   player2Rating = int(players[gameDetails[gameID]['player2']]['rating'])
                   if (max(player1Rating, player2Rating) - int(va['rating']) <= range and
                         int(va['rating']) - min(player1Rating, player2Rating) <= range):
-                     print("MAX: " + str(max(player1Rating, player2Rating)))
-                     print("MIN: " + str(min(player1Rating, player2Rating)))
-                     print("PLAYER3: " + va['rating'])
-                     print("Range: " + str(range))
-                     print("IF MAX: " + str(max(player1Rating, player2Rating) - int(va['rating']) <= range))
-                     print("IF MIN: " + str(int(va['rating']) - min(player1Rating, player2Rating) <= range))
                      gameDetails[gameID]['player3'] = pl
                      gameCreated = True
                      break
       else:
          if not gameCreated:
-            break;
+            break
    
    if gameCreated:
       message = {
