@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 import requests
 
+# URL for the get player data lambda function
 URL = "https://3fxdttozv0.execute-api.us-east-2.amazonaws.com/default/getPlayerInfo"
 
 clients_lock = threading.Lock()
@@ -46,6 +47,7 @@ def CreateGame(sock, addr):
    gameCreated = False
 
    gameDetails = {}
+   global gameID
 
    while not gameCreated:
       for p, v in players.items():
@@ -62,22 +64,41 @@ def CreateGame(sock, addr):
                      gameDetails[gameID]['player1'] = p
                      gameDetails[gameID]['player2'] = pl
                else:
-                  if (max(int(gameDetails[gameID]['player1']), int(gameDetails[gameID]['player2'])) - int(va['rating']) <= range or
-                        int(va['rating']) - min(int(gameDetails[gameID]['player1']), int(gameDetails[gameID]['player2'])) <= range):
+                  player1Rating = int(players[gameDetails[gameID]['player1']]['rating'])
+                  player2Rating = int(players[gameDetails[gameID]['player2']]['rating'])
+                  if (max(player1Rating, player2Rating) - int(va['rating']) <= range and
+                        int(va['rating']) - min(player1Rating, player2Rating) <= range):
+                     print("MAX: " + str(max(player1Rating, player2Rating)))
+                     print("MIN: " + str(min(player1Rating, player2Rating)))
+                     print("PLAYER3: " + va['rating'])
+                     print("Range: " + str(range))
+                     print("IF MAX: " + str(max(player1Rating, player2Rating) - int(va['rating']) <= range))
+                     print("IF MIN: " + str(int(va['rating']) - min(player1Rating, player2Rating) <= range))
                      gameDetails[gameID]['player3'] = pl
                      gameCreated = True
                      break
-      range += 30
-
-   message = {"gameID":gameID, gameDetails[gameID]['player1']:players[gameDetails[gameID]['player1']], gameDetails[gameID]['player2']:players[gameDetails[gameID]['player2']], gameDetails[gameID]['player3']:players[gameDetails[gameID]['player3']]}
-   m = json.dumps(message)
-   sock.sendto(bytes(m, 'utf8'), addr)
+      else:
+         if not gameCreated:
+            break;
    
-   gameID += 1
+   if gameCreated:
+      message = {
+         "gameID":gameID,
+         'player1Key':gameDetails[gameID]['player1'],
+         gameDetails[gameID]['player1']:players[gameDetails[gameID]['player1']],
+         'player2Key':gameDetails[gameID]['player2'],
+         gameDetails[gameID]['player2']:players[gameDetails[gameID]['player2']],
+         'player3Key':gameDetails[gameID]['player3'],
+         gameDetails[gameID]['player3']:players[gameDetails[gameID]['player3']]
+         }
+      m = json.dumps(message)
+      sock.sendto(bytes(m, 'utf8'), addr)
+      
+      del players[gameDetails[gameID]['player1']]
+      del players[gameDetails[gameID]['player2']]
+      del players[gameDetails[gameID]['player3']]
 
-   del players.[gameDetails[gameID]['player1']]
-   del players.[gameDetails[gameID]['player2']]
-   del players.[gameDetails[gameID]['player3']]
+      gameID += 1
 
 def GetPlayerData(playerID):
    PARAMS = {'player_id':playerID}
