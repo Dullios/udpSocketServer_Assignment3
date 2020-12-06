@@ -15,7 +15,8 @@ connected = 0
 
 clients = {}
 players = {}
-gameID = 0
+gameCount = 0
+gameID = 1
 
 def connectionLoop(sock):
    while True:
@@ -34,6 +35,9 @@ def connectionLoop(sock):
                CreateGame(sock, addr)
       else:
          if 'connect' in data:
+            global gameCount
+            gameCount = int(json.loads(data[2:-1])['gameCount'])
+            print("GameCount: " + str(gameCount))
             clients[addr] = {}
             clients[addr]['lastBeat'] = datetime.now()
             message = {"cmd": 0, "id":str(addr)}
@@ -49,7 +53,8 @@ def CreateGame(sock, addr):
    gameDetails = {}
    global gameID
 
-   while not gameCreated:
+   print("GameID: " + str(gameID) + ", GameCount: " + str(gameCount))
+   if gameID <= gameCount:
       for p, v in players.items():
          if gameCreated:
             break
@@ -71,28 +76,25 @@ def CreateGame(sock, addr):
                      gameDetails[gameID]['player3'] = pl
                      gameCreated = True
                      break
-      else:
-         if not gameCreated:
-            break
-   
-   if gameCreated:
-      message = {
-         "gameID":gameID,
-         'player1Key':gameDetails[gameID]['player1'],
-         gameDetails[gameID]['player1']:players[gameDetails[gameID]['player1']],
-         'player2Key':gameDetails[gameID]['player2'],
-         gameDetails[gameID]['player2']:players[gameDetails[gameID]['player2']],
-         'player3Key':gameDetails[gameID]['player3'],
-         gameDetails[gameID]['player3']:players[gameDetails[gameID]['player3']]
-         }
-      m = json.dumps(message)
-      sock.sendto(bytes(m, 'utf8'), addr)
       
-      del players[gameDetails[gameID]['player1']]
-      del players[gameDetails[gameID]['player2']]
-      del players[gameDetails[gameID]['player3']]
+      if gameCreated:
+         message = {
+            "gameID":gameID,
+            'player1Key':gameDetails[gameID]['player1'],
+            gameDetails[gameID]['player1']:players[gameDetails[gameID]['player1']],
+            'player2Key':gameDetails[gameID]['player2'],
+            gameDetails[gameID]['player2']:players[gameDetails[gameID]['player2']],
+            'player3Key':gameDetails[gameID]['player3'],
+            gameDetails[gameID]['player3']:players[gameDetails[gameID]['player3']]
+            }
+         m = json.dumps(message)
+         sock.sendto(bytes(m, 'utf8'), addr)
+         
+         del players[gameDetails[gameID]['player1']]
+         del players[gameDetails[gameID]['player2']]
+         del players[gameDetails[gameID]['player3']]
 
-      gameID += 1
+         gameID += 1
 
 def GetPlayerData(playerID):
    PARAMS = {'player_id':playerID}
