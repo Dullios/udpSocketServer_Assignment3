@@ -37,7 +37,6 @@ def connectionLoop(sock):
          if 'connect' in data:
             global gameCount
             gameCount = int(json.loads(data[2:-1])['gameCount'])
-            print("GameCount: " + str(gameCount))
             clients[addr] = {}
             clients[addr]['lastBeat'] = datetime.now()
             message = {"cmd": 0, "id":str(addr)}
@@ -53,7 +52,6 @@ def CreateGame(sock, addr):
    gameDetails = {}
    global gameID
 
-   print("GameID: " + str(gameID) + ", GameCount: " + str(gameCount))
    if gameID <= gameCount:
       for p, v in players.items():
          if gameCreated:
@@ -78,6 +76,7 @@ def CreateGame(sock, addr):
                      break
       
       if gameCreated:
+         print("Game " + str(gameID) + " created.")
          message = {
             "gameID":gameID,
             'player1Key':gameDetails[gameID]['player1'],
